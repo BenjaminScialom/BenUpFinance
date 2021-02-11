@@ -1,3 +1,7 @@
 numpy~=1.20.1
 setuptools~=52.0.0
 yfinance~=0.1.55
+BenUpFin~=0.1.0
+pandas~=1.2.2
+sklearn~=0.0
+scikit-learn~=0.24.1
