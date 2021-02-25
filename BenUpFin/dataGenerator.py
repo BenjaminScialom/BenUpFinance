@@ -3,6 +3,7 @@ import numpy as np
 import yfinance as yf
 
 
+
 class Data:
 
     def __init__(self, tickers: [str]):
@@ -54,3 +55,12 @@ class Data:
             returns['Log Returns'] = np.log(1 + df['Adj Close'].pct_change(period))
 
         return returns.dropna()
+
+    @staticmethod
+    def get_risk_free_rate() -> float:
+        """
+        Get the 3-month treasury bond rate which is the risk free rate.
+        @return: mean 3 month treasury bond rate over 1 year
+        """
+        rf_rate = yf.Tickers("^ IRX").history("1y").dropna().mean()
+        return rf_rate
