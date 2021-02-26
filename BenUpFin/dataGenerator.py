@@ -3,7 +3,6 @@ import numpy as np
 import yfinance as yf
 
 
-
 class Data:
 
     def __init__(self, tickers: [str]):
@@ -15,7 +14,7 @@ class Data:
         @param period: string (ex: 1y for 1 year until this day)
         @return: 2D Dataframe
         """
-        return yf.Tickers(self.tickers).history(period=period)
+        return yf.download(self.tickers, period=period).dropna()
 
     def oclhv_start_end(self, start: str, end: str) -> pd.DataFrame():
         """
@@ -24,7 +23,7 @@ class Data:
         @param end: "yyy-mm-dd" or "yyyy"
         @return: 2D Dataframe
         """
-        return yf.Tickers(self.tickers).history(start=start, end=end)
+        return yf.download(self.tickers, start=start, end=end).dropna()
 
     def get_close_only(self, df: pd.DataFrame()) -> pd.DataFrame:
         """
@@ -35,11 +34,10 @@ class Data:
 
         adj_close = pd.DataFrame()
         for name in self.tickers:
-            adj_close[name] = df[name]['Adj Close']
-        return adj_close
+            adj_close[name] = df['Adj Close'][name]
+        return adj_close.dropna()
 
-    @staticmethod
-    def get_returns(df: pd.DataFrame(), period: int = 1, method: str = "percent"):
+    def get_close_returns(self, df: pd.DataFrame(), period: int = 1, method: str = "percent"):
         """
 
         @param df: Dataframe (1D) of prices with a column name "Adj Close"
@@ -48,11 +46,11 @@ class Data:
         @return: Dataframe of returns
         """
         returns = pd.DataFrame(index=df.index)
-
-        if method == "percent":
-            returns['Returns'] = df['Adj Close'].pct_change(period)
-        elif method == "log":
-            returns['Log Returns'] = np.log(1 + df['Adj Close'].pct_change(period))
+        for name in self.tickers:
+            if method == "percent":
+                returns['Returns'] = df['Adj Close'][name].pct_change(period)
+            elif method == "log":
+                returns['Log Returns'] = np.log(1 + df['Adj Close'][name].pct_change(period))
 
         return returns.dropna()
 
@@ -62,5 +60,5 @@ class Data:
         Get the 3-month treasury bond rate which is the risk free rate.
         @return: mean 3 month treasury bond rate over 1 year
         """
-        rf_rate = yf.Tickers("^ IRX").history("1y").dropna().mean()
-        return rf_rate
+        rf_rate = yf.download(tickers="^IRX", period="6m")["Adj Close"].dropna().mean()
+        return round(rf_rate, 5)

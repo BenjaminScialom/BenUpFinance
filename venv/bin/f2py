@@ -1,4 +1,4 @@
-#!/Users/benjamin.s/Desktop/BenUpFinance/venv/bin/python3
+#!/Users/benjamin.s/Desktop/BenUpFinance/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
