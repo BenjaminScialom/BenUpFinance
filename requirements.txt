@@ -5,3 +5,4 @@ BenUpFin~=0.1.0
 pandas~=1.2.2
 sklearn~=0.0
 scikit-learn~=0.24.1
+matplotlib~=3.3.4

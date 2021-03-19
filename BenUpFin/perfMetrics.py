@@ -2,16 +2,31 @@ from typing import Any, Dict
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-
-from BenUpFin.dataGenerator import Data
+import yfinance as yf
 
 
 class Metrics:
 
-    def __init__(self, tickers: [str], period: str = "1y"):
-        data = Data(tickers)
-        self.prices = data.get_close_only(data.oclhv(period))
-        self.returns = data.get_returns(self.prices)
+    def __init__(self, data: pd.DataFrame(), tickers: [str]):
+        self.tickers = tickers
+        self.data = data
+        self.returns = self.get_close_returns(data)
+
+    def get_close_returns(self,  n: int = 1, method: str = "percent"):
+        """
+        @param n: period over which the returns have to be computed
+        @param method: log if you want log returns or percent if you want the basic return (as percentage of change)
+        @return: Dataframe of returns
+        """
+        returns = pd.DataFrame()
+
+        for name in self.tickers:
+            if method == "percent":
+                returns["Returns_"+name] = self.data['Adj Close'][name].pct_change()
+            elif method == "log":
+                returns['Log Returns_'+name] = np.log(1 + self.data['Adj Close'][name].pct_change())
+
+        return returns.dropna()
 
     def get_years_past(self) -> float:
         """
@@ -137,4 +152,11 @@ class Metrics:
 
         return alpha
 
-
+    @staticmethod
+    def get_risk_free_rate() -> float:
+        """
+        Get the 3-month treasury bond rate which is the risk free rate.
+        @return: mean 3 month treasury bond rate over 1 year
+        """
+        rf_rate = yf.download(tickers="^IRX", period="6m")["Adj Close"].dropna().mean()
+        return round(rf_rate, 5)
