@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 import yfinance as yf
+from BenUpFin import preProcessing as pp
 
 
 class Metrics:
@@ -10,31 +11,16 @@ class Metrics:
     def __init__(self, data: pd.DataFrame(), tickers: [str]):
         self.tickers = tickers
         self.data = data
-        self.returns = self.get_close_returns(data)
+        self.returns = pp.get_daily_returns(data, tickers)
 
-    def get_close_returns(self,  n: int = 1, method: str = "percent"):
-        """
-        @param n: period over which the returns have to be computed
-        @param method: log if you want log returns or percent if you want the basic return (as percentage of change)
-        @return: Dataframe of returns
-        """
-        returns = pd.DataFrame()
-
-        for name in self.tickers:
-            if method == "percent":
-                returns["Returns_"+name] = self.data['Adj Close'][name].pct_change()
-            elif method == "log":
-                returns['Log Returns_'+name] = np.log(1 + self.data['Adj Close'][name].pct_change())
-
-        return returns.dropna()
 
     def get_years_past(self) -> float:
         """
         Calculate the numbers of years past according to the index of the dataframe.
         It is use for annualization of the volatility
         """
-        start_date = self.prices.index[0]
-        end_date = self.prices.index[-1]
+        start_date = self.data.index[0]
+        end_date = self.data.index[-1]
 
         return round((end_date - start_date).days / 365.25, 4)
 
@@ -53,7 +39,7 @@ class Metrics:
         Calculate compounded annual growth rate of a single asset or a portfolio.
         This is equivalent to annualized returns.
         """
-        value_factor = self.prices.iloc[-1] / self.prices.iloc[0]
+        value_factor = self.data['Adj Close'].iloc[-1] / self.data['Adj Close'].iloc[0]
         years_past = self.get_years_past()
 
         return round((value_factor ** (1 / years_past)) - 1, 4)
@@ -105,10 +91,10 @@ class Metrics:
         @return: A dictionary with the maxdrawdown and its information
         """
         max_dd = 0
-        local_peak_date = peak_date = end_date = self.prices.index[0]
-        local_peak_price = peak_price = end_price = self.prices.iloc[0]
+        local_peak_date = peak_date = end_date = self.data['Adj Close'].index[0]
+        local_peak_price = peak_price = end_price = self.data['Adj Close'].iloc[0]
 
-        for date, price in self.prices.iteritems():
+        for date, price in self.data['Adj Close'].iteritems():
             print(price)
             print(local_peak_price)
             # keep track of the rolling max

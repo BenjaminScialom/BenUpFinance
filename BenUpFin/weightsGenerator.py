@@ -18,6 +18,7 @@ class Weights:
     def random_weights(self):
         weights = np.random.random(self.nb_asset)
         weights /= np.sum(weights)
+        return weights
 
     
 

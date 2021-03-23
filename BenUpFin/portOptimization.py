@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
-from numpy.random import random, uniform, dirichlet, choice
+from numpy.random import dirichlet, choice
 import matplotlib.pyplot as plt
+from BenUpFin import preProcessing as pp
 
 
 def plot_sim_portfolios(simul_perf: pd.DataFrame(), nb_simulation: int = 10000):
@@ -34,7 +35,7 @@ class PortOpt:
     def __init__(self, data: pd.DataFrame(), tickers: [str]):
         self.tickers = tickers
         self.data = data
-        self.returns = self.get_close_returns(data)
+        self.returns = pp.get_daily_returns(data=data, tickers=tickers, method="percent")
 
     def get_days_past(self) -> float:
         """
@@ -45,22 +46,6 @@ class PortOpt:
         end_date = self.returns.index[-1]
 
         return round((end_date - start_date).days, 4)
-
-    def get_close_returns(self, period: int = 1, method: str = "percent"):
-        """
-        @param df: Dataframe (1D) of prices with a column name "Adj Close"
-        @param period: period over which the returns have to be computed
-        @param method: log if you want log returns or percent if you want the basic return (as percentage of change)
-        @return: Dataframe of returns
-        """
-        returns = pd.DataFrame()
-
-        for name in self.tickers:
-            if method == "percent":
-                returns[name] = self.data['Adj Close'][name].pct_change()
-            elif method == "log":
-                returns[name] = np.log(1 + self.data['Adj Close'][name].pct_change())
-        return returns.dropna()
 
     def sim_portfolios(self, nb_simulation: int = 10000, rf_rate: float = 0, short=False):
         """
