@@ -2,13 +2,16 @@ import pandas as pd
 import numpy as np
 from BenUpFin import preProcessing
 from scipy.stats import norm, t
+from arch import arch_model
+from arch.__future__ import reindexing
+
 class Metrics:
 
     def __init__(self, data: pd.DataFrame(), tickers: [str], weights: [float]):
         self.data = data
         self.returns = preProcessing.get_daily_returns(data=data, tickers=tickers, method='percent')
         self.weights = weights
-        self.portfolioReturns = preProcessing.get_daily_returns(data=data, tickers=tickers, method='percent') @ weights
+        self.portfolioReturns= preProcessing.get_daily_returns(data=data, tickers=tickers, method='percent') @ weights
 
     def historicalVaR(self, confidenceLevel: int = 95) -> {}:
         var = {}
@@ -34,20 +37,20 @@ class Metrics:
         es = np.round(-1 * self.portfolioReturns[self.portfolioReturns <= cut].mean(), 3)
         return es
 
-    def parametricVar_Normal(self,  condidenceLevel: float = 0.95)->{}:
+    def parametricVar_Normal(self,  confidenceLevel: float = 0.95)->{}:
         var = {}
         for name in self.returns.columns:
             mu = np.mean(self.returns[name])
             std = np.std(self.returns[name])
-            var[name] = round(mu + std * norm.ppf(condidenceLevel), 3)
+            var[name] = round(mu + std * norm.ppf(confidenceLevel), 3)
         return var
 
-    def parametricES_Normal(self, condidenceLevel: float = 0.95)->{}:
+    def parametricES_Normal(self, confidenceLevel: float = 0.95)->{}:
         es = {}
         for name in self.returns.columns:
             mu = np.mean(self.returns[name])
             std = np.std(self.returns[name])
-            es[name] = round(mu + std * norm.pdf(norm.ppf(condidenceLevel)) * (1-condidenceLevel)**-1, 3)
+            es[name] = round(mu + std * norm.pdf(norm.ppf(confidenceLevel)) * (1-confidenceLevel)**-1, 3)
 
         return es
 
@@ -124,4 +127,22 @@ class Metrics:
 
         return es
 
+    def GARCH_normal_VaR(self, confidenceLevel:int = 0.95)->pd.DataFrame():
+
+        df = pd.DataFrame(index=self.portfolioReturns.index)
+        print(df.head())
+        # Specify and fit a GARCH model
+        model = arch_model(self.portfolioReturns, p = 1, q = 1,mean = 'constant', vol = 'GARCH', dist = 't', rescale=False)
+        model_fit = model.fit(disp='off',)
+
+        # Make mean & variance forecast
+        forecast = model_fit.forecast(start=self.portfolioReturns.index.values[0])
+        mu = forecast.mean[self.portfolioReturns.index.values[0]:]
+        df['mean'] = mu
+        std = np.sqrt(forecast.variance[self.portfolioReturns.index.values[0]:])
+        df['Volatility'] = std
+        df['VaR'] = mu.values + std.values * norm.ppf(confidenceLevel)
+        df['ES'] = mu.values + std.values * norm.pdf(norm.ppf(confidenceLevel)) * (1 - confidenceLevel) ** -1
+
+        return df
 
