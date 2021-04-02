@@ -22,7 +22,8 @@ def main():
     es_mc_p = risk.MonteCarlo_Portfolio_ES()
     es_mc = risk.MonteCarlo_ES()
     var_mc = risk.MonteCarlo_VaR()
-    var_g = risk.GARCH_normal_VaR()
+    var_g = risk.GARCH_Normal_RiskMeasures_Portfolio()
+    ewma_var = risk.EWMA_RiskMeasures_Portfolio()
     print("Detailed view:")
     print(f"VaR = {var}")
     print(f"Expected Shortfall = {es}")
@@ -48,7 +49,8 @@ def main():
     print(f"Expected Shortfall = {es_mc}")
     print("-"*50)
     print("Dynamic:")
-    print(var_g.head())
+    print(var_g.tail())
+    print(ewma_var.tail())
 
 
 if __name__ == '__main__':
