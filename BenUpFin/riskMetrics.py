@@ -2,8 +2,7 @@ import pandas as pd
 import numpy as np
 from BenUpFin import preProcessing
 from scipy.stats import norm, t
-from arch import arch_model
-from arch.__future__ import reindexing
+#from arch import arch_model
 import math
 
 class Metrics:
